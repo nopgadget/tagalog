@@ -23,5 +23,8 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]  # Include millisec
 filename = f"tagalog_tts_{timestamp}.wav"
 output_path = os.path.join(output_folder, filename)
 
-scipy.io.wavfile.write(output_path, rate=model.config.sampling_rate, data=output)
+# Convert PyTorch tensor to numpy array and squeeze to remove extra dimensions
+output_numpy = output.squeeze().cpu().numpy()
+
+scipy.io.wavfile.write(output_path, rate=model.config.sampling_rate, data=output_numpy)
 print(f"Audio saved to: {output_path}")
