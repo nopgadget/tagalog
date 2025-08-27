@@ -6,7 +6,7 @@ from datetime import datetime
 model = VitsModel.from_pretrained("facebook/mms-tts-tgl")
 tokenizer = AutoTokenizer.from_pretrained("facebook/mms-tts-tgl")
 
-text = "magandang tanghali, akon buang! palangga taka bhe"
+text = "magandang tanghali"
 inputs = tokenizer(text, return_tensors="pt")
 
 with torch.no_grad():
