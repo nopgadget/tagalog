@@ -22,7 +22,7 @@ def load_model():
         tokenizer = AutoTokenizer.from_pretrained("facebook/mms-tts-tgl")
         print("Model loaded successfully!")
 
-def generate_audio(text, speech_rate=1.0):
+def generate_audio(text):
     """Generate audio from text using the TTS model"""
     if model is None or tokenizer is None:
         load_model()
@@ -36,18 +36,6 @@ def generate_audio(text, speech_rate=1.0):
     
     # Convert to numpy array
     output_numpy = output.squeeze().cpu().numpy()
-    
-    # Apply speech rate control through audio resampling
-    if speech_rate != 1.0:
-        from scipy import signal
-        
-        # Calculate new length based on speech rate
-        original_length = len(output_numpy)
-        new_length = int(original_length / speech_rate)
-        
-        # Resample the audio to change speed
-        # This maintains pitch while changing speed
-        output_numpy = signal.resample(output_numpy, new_length)
     
     # Create a temporary file with unique name
     temp_filename = f"temp_audio_{uuid.uuid4().hex}.wav"
@@ -70,24 +58,18 @@ def generate_tts():
     try:
         data = request.get_json()
         text = data.get('text', '').strip()
-        speech_rate = data.get('speech_rate', 0.7)  # Default to slower speech
         
         if not text:
             return jsonify({'error': 'Please provide text input'}), 400
         
-        # Validate speech rate (keep it reasonable)
-        if speech_rate < 0.3 or speech_rate > 2.0:
-            speech_rate = 0.7  # Default if out of range
-        
-        # Generate audio with speech rate control
-        audio_path = generate_audio(text, speech_rate)
+        # Generate audio
+        audio_path = generate_audio(text)
         
         # Return the temporary filename for the client to request
         return jsonify({
             'success': True,
             'audio_file': os.path.basename(audio_path),
-            'message': f'Generated audio for: "{text}" (Speed: {speech_rate:.1f}x)',
-            'speech_rate': speech_rate
+            'message': f'Generated audio for: "{text}"'
         })
         
     except Exception as e:
