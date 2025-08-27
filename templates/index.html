@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tagalog TTS - Text to Speech</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .generate-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ffffff3d;
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .audio-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            display: none;
+        }
+
+        .audio-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .audio-player {
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .example-texts {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .example-texts h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .example-btn {
+            background: #e9ecef;
+            color: #495057;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .example-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .footer {
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .controls-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .speech-rate-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .speed-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+
+        .speed-slider:hover {
+            opacity: 1;
+        }
+
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .speed-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎤 Tagalog TTS</h1>
+            <p>Convert Tagalog text to natural speech</p>
+        </div>
+
+        <div class="input-section">
+            <textarea 
+                class="text-input" 
+                id="textInput" 
+                placeholder="Enter Tagalog text here... (e.g., 'Magandang umaga!')"
+                maxlength="500"
+            ></textarea>
+            
+            <div class="controls-section">
+                <div class="speech-rate-control">
+                    <label for="speechRate">Speech Speed: <span id="speedValue">0.7x</span></label>
+                    <input 
+                        type="range" 
+                        id="speechRate" 
+                        min="0.3" 
+                        max="2.0" 
+                        step="0.1" 
+                        value="0.7"
+                        class="speed-slider"
+                    >
+                </div>
+                
+                <button class="generate-btn" id="generateBtn" onclick="generateTTS()">
+                    <span id="btnText">Generate Speech</span>
+                    <span id="loadingSpinner" class="loading" style="display: none;"></span>
+                </button>
+            </div>
+        </div>
+
+        <div class="audio-section" id="audioSection">
+            <h3>🎵 Generated Audio</h3>
+            <audio id="audioPlayer" class="audio-player" controls>
+                Your browser does not support the audio element.
+            </audio>
+            <p id="statusMessage"></p>
+        </div>
+
+        <div class="example-texts">
+            <h3>💡 Try these examples:</h3>
+            <button class="example-btn" onclick="setExampleText('Magandang umaga!')">Magandang umaga!</button>
+            <button class="example-btn" onclick="setExampleText('Kumusta ka?')">Kumusta ka?</button>
+            <button class="example-btn" onclick="setExampleText('Salamat po')">Salamat po</button>
+            <button class="example-btn" onclick="setExampleText('Mahal kita')">Mahal kita</button>
+            <button class="example-btn" onclick="setExampleText('Paalam na po')">Paalam na po</button>
+        </div>
+
+        <div class="footer">
+            <p>Powered by Facebook MMS-TTS-TGL Model</p>
+        </div>
+    </div>
+
+    <script>
+        let currentAudioFile = null;
+
+        function setExampleText(text) {
+            document.getElementById('textInput').value = text;
+        }
+
+        async function generateTTS() {
+            const textInput = document.getElementById('textInput');
+            const generateBtn = document.getElementById('generateBtn');
+            const btnText = document.getElementById('btnText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const audioSection = document.getElementById('audioSection');
+            const statusMessage = document.getElementById('statusMessage');
+            const speechRateInput = document.getElementById('speechRate');
+            const speedValueSpan = document.getElementById('speedValue');
+
+            const text = textInput.value.trim();
+            
+            if (!text) {
+                showStatus('Please enter some text to convert to speech.', 'error');
+                return;
+            }
+
+            // Show loading state
+            generateBtn.disabled = true;
+            btnText.textContent = 'Generating...';
+            loadingSpinner.style.display = 'inline-block';
+            hideStatus();
+
+            try {
+                const response = await fetch('/generate_tts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        text: text,
+                        speech_rate: speechRateInput.value
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Clean up previous audio file
+                    if (currentAudioFile) {
+                        await fetch(`/cleanup/${currentAudioFile}`);
+                    }
+
+                    // Set new audio file
+                    currentAudioFile = data.audio_file;
+                    const audioPlayer = document.getElementById('audioPlayer');
+                    audioPlayer.src = `/audio/${currentAudioFile}`;
+                    
+                    // Show audio section
+                    audioSection.classList.add('show');
+                    showStatus(data.message, 'success');
+                    
+                    // Auto-play the audio
+                    audioPlayer.play().catch(e => console.log('Auto-play prevented:', e));
+                } else {
+                    showStatus(data.error || 'Failed to generate audio.', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus('An error occurred while generating audio.', 'error');
+            } finally {
+                // Reset button state
+                generateBtn.disabled = false;
+                btnText.textContent = 'Generate Speech';
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message status-${type}`;
+        }
+
+        function hideStatus() {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = '';
+            statusMessage.className = '';
+        }
+
+        // Update speed value display
+        document.getElementById('speechRate').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'x';
+        });
+
+        // Handle Enter key in textarea
+        document.getElementById('textInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                generateTTS();
+            }
+        });
+
+        // Clean up audio file when page is unloaded
+        window.addEventListener('beforeunload', async function() {
+            if (currentAudioFile) {
+                try {
+                    await fetch(`/cleanup/${currentAudioFile}`);
+                } catch (e) {
+                    console.log('Cleanup failed:', e);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
